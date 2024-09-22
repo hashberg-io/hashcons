@@ -1,0 +1,45 @@
+[project]
+name = "flyweight"
+version = "0.0.1"
+authors = [{ name = "Hashberg" }]
+description = "Simple implementation of hash consing and flyweight instance management."
+readme = { file = "README.rst", content-type = "text/x-rst" }
+requires-python = ">=3.9"
+dependencies = ["typing-extensions>=4.12.2"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.9",
+    "Natural Language :: English",
+    "Typing :: Typed",
+]
+
+[project.urls]
+Documentation = "https://flyweight.readthedocs.io"
+Repository = "https://github.com/hashberg-io/flyweight"
+Issues = "https://github.com/hashberg-io/flyweight/issues"
+
+[build-system] # see https://pypi.org/classifiers/
+requires = [
+    "setuptools>=63.4.3",  # see https://github.com/python/mypy/issues/13392#issuecomment-1212727421
+    "wheel",
+    "setuptools_scm>=6.2",
+]
+build-backend = "setuptools.build_meta"
+
+# see https://github.com/pypa/setuptools_scm
+[tool.setuptools_scm]
+version_scheme = "post-release"   # use post-release scheme (default is pre-release of next version)
+local_scheme = "no-local-version" # interferes with PyPI
+
+[tool.black]
+line-length = 80
+target-version = ["py39", "py310", "py311", "py312"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
