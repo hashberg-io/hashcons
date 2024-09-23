@@ -1,5 +1,5 @@
-flyweight: hash consing and instance management
-===============================================
+Flyweight: hash consing for flyweight classes
+=============================================
 
 .. image:: https://img.shields.io/badge/python-3.12+-green.svg
     :target: https://docs.python.org/3.12/
@@ -30,7 +30,7 @@ flyweight: hash consing and instance management
     :alt: standard-readme compliant
 
 
-A simple implementation of hash consing and flyweight instance management.
+A simple implementation of flyweight instance management using hash consing.
 
 .. contents::
 

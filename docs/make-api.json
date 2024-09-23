@@ -1,0 +1,7 @@
+{
+    "pkg_name": "flyweight",
+    "pkg_path": "../src/",
+    "apidocs_folder": "api",
+    "toc_filename": "api-toc.rst",
+    "type_alias_dict_filename": "autodoc-type-aliases.json"
+}

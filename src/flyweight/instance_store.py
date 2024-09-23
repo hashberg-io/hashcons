@@ -1,5 +1,6 @@
 """
-    Managed creation of class instances, uniquely identified by a given key.
+The :class:`InstanceStore` class provides a mechanism to manage the creation
+of instances for flyweight classes, based on class and a unique instance key.
 """
 
 # Part of flyweight: hash consing and flyweight instance management.
@@ -36,8 +37,67 @@ Covariant type variable for arbitrary values.
 
 class InstanceStore:
     """
-    Class to manage the creation of instances of a given class which are
-    uniquely identified by a given key.
+
+    An instance store, which can be used to manage the process of instance
+    creation for instances of flyweight classes.
+    Instances are stored internally in a :class:`~weakref.WeakValueDictionary`,
+    indexed by their class and a user-provided instance key.
+
+    The :meth:`instance` method implements a context manager for use within the
+    flyweight class constructor, within which managed instance creation can be
+    performed.
+
+    The :meth:`register` method must be called within the :meth:`instance`
+    context when a new instance is created, as opposed to when an existing
+    instance is used.
+
+    .. code-block:: python
+
+        class MyClass:
+
+            __store: ClassVar[InstanceStore] = InstanceStore()
+
+            def __new__(cls, ...) -> Self:
+                #       args ^^^
+                key = ...# derive instance key from constructor args
+                with MyClass.__store.instance(cls, key) as self:
+                    if self is None: # if no instance with given key exists
+                        self = super().__new__(cls)
+                        ... # <- set instance attributes here
+                        MyClass.__store.register(self)
+                    return self
+
+            ... # <- class body here
+
+    In order to customise the instance creation process, it will typically be
+    necessary to implement flyweight class constructors using
+    `__new__ <https://docs.python.org/3/reference/datamodel.html#object.__new__>`_,
+    rather than
+    `__init__ <https://docs.python.org/3/reference/datamodel.html#object.__init__>`_.
+
+    If `pickle <https://docs.python.org/3/library/pickle.html>` support is
+    desirable, flyweight classes should implement either the
+    `__getnewargs__ <https://docs.python.org/3/library/pickle.html#object.__getnewargs__>`_
+    method or the
+    `__getnewargs_ex__ <https://docs.python.org/3/library/pickle.html#object.__getnewargs_ex__>`_
+    method, depending on whether the constructor takes keyword-only arguments.
+    Classes should also implement
+    `__getstate__` <https://docs.python.org/3/library/pickle.html#object.__getstate__>`_
+    to return :obj:`None`, in order to prevent the default
+    `__setstate__` <https://docs.python.org/3/library/pickle.html#object.__setstate__>`_
+    being called by the pickling process (cf.
+    `PEP 307 <https://peps.python.org/pep-0307/#case-3-pickling-new-style-class-instances-using-protocol-2>`_).
+
+    .. code-block:: python
+
+        def __getnewargs__(self) -> tuple[...]:
+            #      __new__ arg types here ^^^
+            return (...)
+            #       ^^^ args to __new__ here
+
+        def __getstate__(self) -> Literal[None]:
+            return None
+
     """
     __lock: ClassVar[RLock] = RLock()
 
@@ -78,44 +138,31 @@ class InstanceStore:
 
         1. The instance building process is started.
         2. The value :obj:`None` is yielded, to signal to the context
-            that no instance with the given key exists yet.
+           that no instance with the given key exists yet.
         3. Once control is returned to the context manager, it checks
-            that an instance was registered using the :meth`register` method,
-            and that it is actually an instance of the given class.
+           that an instance was registered using the :meth`register` method,
+           and that it is actually an instance of the given class.
         4. If the checks from Step 3 are successful, the instance is stored
-            using the given class and key.
+           using the given class and key.
         5. Regardless of whether the checks from Step 3 are successful, the
-            instance building process is terminated.
+           instance building process is terminated.
 
         It is possible for the same instance building process to be shared
         by multiple contexts, e.g. when using the same store for instances
-        of a class and/or its subclasses.
+        of a class and its subclasses.
         If the context manager is invoked multiple times, it yields the
         same value across all calls, but the instance process is started
         at most once by the outermost call, and fully handled by it.
+        This makes it possible to create subclasses of a flyweight class.
 
         If the instance building process is started, the
         :meth:`~InstanceStore.register` method must be called exactly once.
 
         Failure to comply with the above requirements results in an
         :exc:`AssertionError` being raised.
-
-        Example usage:
-
-        .. code-block:: python
-
-            class MyClass:
-
-                __store: ClassVar[InstanceStore] = InstanceStore()
-
-                def __new__(cls, ...) -> Self:
-                    key = ...# derive instance key from constructor args
-                    with MyClass.__store.instance(cls, key) as self:
-                        if self is None:
-                            self = super().__new__(cls)
-                            # ...set instance attributes here...
-                            MyClass.__store.register(self)
-                        return self
+        For the sake of performance, all validation is done by assertions,
+        so it is removed when compiling with the
+        `-O flag <https://docs.python.org/3/using/cmdline.html#cmdoption-O>`_.
 
         """
         InstanceStore.__lock.acquire()
@@ -168,13 +215,9 @@ class InstanceStore:
         Otherwise, the instance is ignored.
 
         If the instance building process is started by the :meth:`instance`
-        method, the :meth:`register` method must be called exactly once:
-
-        - If it is called more than once, :exc:`AssertionError` is raised by
-            the :meth:`register` method.
-        - If it is not called, :exc:`AssertionError` is raised by
-            the :meth:`instance` method.
-
+        method, the :meth:`register` method must be called exactly once,
+        otherwise an :exc:`AssertionError` will be raised by the
+        :meth:`instance` method at the moment when the context is exited.
         """
         if self.__building_instance:
             assert (
