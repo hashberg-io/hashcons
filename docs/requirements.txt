@@ -1,6 +1,6 @@
 sphinx_rtd_theme
 sphinx_autodoc_typehints
 
+hashcons
 typing_extensions
 typed_descriptors
-# include all package dependencies here
