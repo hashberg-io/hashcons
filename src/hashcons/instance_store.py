@@ -75,16 +75,16 @@ class InstanceStore:
     rather than
     `__init__ <https://docs.python.org/3/reference/datamodel.html#object.__init__>`_.
 
-    If `pickle <https://docs.python.org/3/library/pickle.html>` support is
+    If `pickle <https://docs.python.org/3/library/pickle.html>`_ support is
     desirable, flyweight classes should implement either the
     `__getnewargs__ <https://docs.python.org/3/library/pickle.html#object.__getnewargs__>`_
     method or the
     `__getnewargs_ex__ <https://docs.python.org/3/library/pickle.html#object.__getnewargs_ex__>`_
     method, depending on whether the constructor takes keyword-only arguments.
     Classes should also implement
-    `__getstate__` <https://docs.python.org/3/library/pickle.html#object.__getstate__>`_
+    `__getstate__ <https://docs.python.org/3/library/pickle.html#object.__getstate__>`_
     to return :obj:`None`, in order to prevent the default
-    `__setstate__` <https://docs.python.org/3/library/pickle.html#object.__setstate__>`_
+    `__setstate__ <https://docs.python.org/3/library/pickle.html#object.__setstate__>`_
     being called by the pickling process (cf.
     `PEP 307 <https://peps.python.org/pep-0307/#case-3-pickling-new-style-class-instances-using-protocol-2>`_).
 
