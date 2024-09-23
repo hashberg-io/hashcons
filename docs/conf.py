@@ -68,6 +68,7 @@ intersphinx_mapping = {
         "https://typing-validation.readthedocs.io/en/latest",
         "./intersphinx/typing-validation-objects.inv",
     ),
+    "hashcons": ("https://hashcons.readthedocs.io/en/latest"),
 }
 
 # Add any paths that contain templates here, relative to this directory.
