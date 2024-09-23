@@ -75,8 +75,7 @@ class InstanceStore:
     rather than
     `__init__ <https://docs.python.org/3/reference/datamodel.html#object.__init__>`_.
 
-    If `pickle <https://docs.python.org/3/library/pickle.html>`_ support is
-    desirable, flyweight classes should implement either the
+    If :mod:`pickle` support is desirable, flyweight classes should implement either the
     `__getnewargs__ <https://docs.python.org/3/library/pickle.html#object.__getnewargs__>`_
     method or the
     `__getnewargs_ex__ <https://docs.python.org/3/library/pickle.html#object.__getnewargs_ex__>`_
