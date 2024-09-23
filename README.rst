@@ -1,28 +1,28 @@
-Flyweight: hash consing for flyweight classes
+hashcons: hash consing for flyweight classes
 =============================================
 
 .. image:: https://img.shields.io/badge/python-3.12+-green.svg
     :target: https://docs.python.org/3.12/
     :alt: Python versions
 
-.. image:: https://img.shields.io/pypi/v/flyweight.svg
-    :target: https://pypi.python.org/pypi/flyweight/
+.. image:: https://img.shields.io/pypi/v/hashcons.svg
+    :target: https://pypi.python.org/pypi/hashcons/
     :alt: PyPI version
 
-.. image:: https://img.shields.io/pypi/status/flyweight.svg
-    :target: https://pypi.python.org/pypi/flyweight/
+.. image:: https://img.shields.io/pypi/status/hashcons.svg
+    :target: https://pypi.python.org/pypi/hashcons/
     :alt: PyPI status
 
 .. image:: http://www.mypy-lang.org/static/mypy_badge.svg
     :target: https://github.com/python/mypy
     :alt: Checked with Mypy
 
-.. image:: https://readthedocs.org/projects/flyweight/badge/?version=latest
-    :target: https://flyweight.readthedocs.io/en/latest/?badge=latest
+.. image:: https://readthedocs.org/projects/hashcons/badge/?version=latest
+    :target: https://hashcons.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
-.. image:: https://github.com/hashberg-io/flyweight/actions/workflows/python-pytest.yml/badge.svg
-    :target: https://github.com/hashberg-io/flyweight/actions/workflows/python-pytest.yml
+.. image:: https://github.com/hashberg-io/hashcons/actions/workflows/python-pytest.yml/badge.svg
+    :target: https://github.com/hashberg-io/hashcons/actions/workflows/python-pytest.yml
     :alt: Python package status
 
 .. image:: https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square
@@ -37,11 +37,11 @@ A simple implementation of flyweight instance management using hash consing.
 Install
 -------
 
-You can install the latest release from `PyPI <https://pypi.org/project/flyweight/>`_:
+You can install the latest release from `PyPI <https://pypi.org/project/hashcons/>`_:
 
 .. code-block:: console
 
-    $ pip install -U flyweight
+    $ pip install -U hashcons
 
 Usage
 -----
@@ -51,7 +51,7 @@ A common pattern is to use an instance store for each flyweight class, stored as
 
 .. code-block:: python
 
-    from flyweight import InstanceStore
+    from hashcons import InstanceStore
     from typing import ClassVar
     from typing_extensions import Self
 
@@ -176,7 +176,7 @@ the new instance as been registered by the superclass constructor, but it will b
 API
 ---
 
-The full API documentation is available at https://flyweight.readthedocs.io/
+The full API documentation is available at https://hashcons.readthedocs.io/
 
 License
 -------

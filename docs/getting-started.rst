@@ -2,18 +2,18 @@ Getting Started
 ===============
 
 A simple implementation of flyweight instance management using hash consing.
-You can install the latest release from `PyPI <https://pypi.org/project/flyweight/>`_:
+You can install the latest release from `PyPI <https://pypi.org/project/hashcons/>`_:
 
 .. code-block:: console
 
-    $ pip install -U flyweight
+    $ pip install -U hashcons
 
-The :class:`~flyweight.instance_store.InstanceStore` class can be used to create instance stores, i.e. flyweight factories.
+The :class:`~hashcons.instance_store.InstanceStore` class can be used to create instance stores, i.e. flyweight factories.
 The following code snippet exemplifies its intended usage:
 
 .. code-block:: python
 
-    from flyweight import InstanceStore
+    from hashcons import InstanceStore
     from typing import ClassVar, Literal
     from typing_extensions import Self
 
@@ -53,4 +53,4 @@ The following code snippet exemplifies its intended usage:
         ... # <- class body here
 
 
-GitHub repo: https://github.com/hashberg-io/flyweight
+GitHub repo: https://github.com/hashberg-io/hashcons

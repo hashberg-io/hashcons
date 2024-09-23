@@ -1,8 +1,8 @@
 """
-Simple implementation of hash consing and flyweight instance management.
+Simple implementation of flyweight instance management using hash consing.
 """
 
-# flyweight: hash consing and flyweight instance management.
+# HashCons: hash consing for flyweight classes
 # Copyright (C) 2024 Hashberg Ltd
 
 # This library is free software; you can redistribute it and/or

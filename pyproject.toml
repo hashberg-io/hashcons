@@ -1,8 +1,8 @@
 [project]
-name = "flyweight"
-version = "0.0.1"
+name = "hashcons"
+version = "0.1.0"
 authors = [{ name = "Hashberg" }]
-description = "Simple implementation of hash consing and flyweight instance management."
+description = "Hash consing for flyweight instance management."
 readme = { file = "README.rst", content-type = "text/x-rst" }
 requires-python = ">=3.9"
 dependencies = ["typing-extensions>=4.12.2"]
@@ -19,9 +19,9 @@ classifiers = [
 ]
 
 [project.urls]
-Documentation = "https://flyweight.readthedocs.io"
-Repository = "https://github.com/hashberg-io/flyweight"
-Issues = "https://github.com/hashberg-io/flyweight/issues"
+Documentation = "https://hashcons.readthedocs.io"
+Repository = "https://github.com/hashberg-io/hashcons"
+Issues = "https://github.com/hashberg-io/hashcons/issues"
 
 [build-system] # see https://pypi.org/classifiers/
 requires = [

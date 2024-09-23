@@ -24,7 +24,7 @@ import sphinx_rtd_theme  # type: ignore
 
 # -- Project information -----------------------------------------------------
 
-project = "flyweight"
+project = "hashcons"
 copyright = "2024, Hashberg"
 author = "Hashberg"
 

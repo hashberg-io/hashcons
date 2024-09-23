@@ -3,7 +3,7 @@ The :class:`InstanceStore` class provides a mechanism to manage the creation
 of instances for flyweight classes, based on class and a unique instance key.
 """
 
-# Part of flyweight: hash consing and flyweight instance management.
+# Part of HashCons: hash consing for flyweight classes
 # Copyright (C) 2024 Hashberg Ltd
 
 # This library is free software; you can redistribute it and/or

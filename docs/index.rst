@@ -1,9 +1,9 @@
-Flyweight: hash consing for flyweight classes
-=============================================
+HashCons: hash consing for flyweight classes
+============================================
 
 A simple implementation of flyweight instance management using hash consing.
 
-GitHub repo: https://github.com/hashberg-io/flyweight
+GitHub repo: https://github.com/hashberg-io/hashcons
 
 .. toctree::
     :maxdepth: 3

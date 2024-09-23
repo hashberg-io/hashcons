@@ -1,5 +1,5 @@
 {
-    "pkg_name": "flyweight",
+    "pkg_name": "hashcons",
     "pkg_path": "../src/",
     "apidocs_folder": "api",
     "toc_filename": "api-toc.rst",
