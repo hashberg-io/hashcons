@@ -21,8 +21,8 @@ hashcons: hash consing for flyweight classes
     :target: https://hashcons.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
-.. image:: https://github.com/hashberg-io/hashcons/actions/workflows/python-pytest.yml/badge.svg
-    :target: https://github.com/hashberg-io/hashcons/actions/workflows/python-pytest.yml
+.. image:: https://github.com/hashberg-io/hashcons/actions/workflows/python.yml/badge.svg
+    :target: https://github.com/hashberg-io/hashcons/actions/workflows/python.yml
     :alt: Python package status
 
 .. image:: https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square
