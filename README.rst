@@ -134,12 +134,12 @@ Because subclasses are stored separately, flyweight classes support inheritance.
 Subclasses should use the `instance` context manager for the flyweight superclass's store, which will return an instance of the subclass for the given instance key, if one exists.
 If a new instance of the subclass must be created, the subclass can do so by making a call to the superclass constructor:
 
-    1. The `instance` context is entered in the superclass constructor:
-    it recognises that it is entered within another `instance` context for the same store,
-    it presumes that this is because the superclass constructor was called by a subclass, and it returns `None` to signal to the superclass constructor that a new instance is needed.
-    2. The superclass constructor creates a new instance, sets its attributes, registers it,
-    and returns it to the subclass constructor.
-    3. The subclass constructor takes the instance from the superclass constructor, sets its attribtues, and returns it.
+1. The `instance` context is entered in the superclass constructor:
+   it recognises that it is entered within another `instance` context for the same store,
+   it presumes that this is because the superclass constructor was called by a subclass, and it returns `None` to signal to the superclass constructor that a new instance is needed.
+2. The superclass constructor creates a new instance, sets its attributes, registers it,
+   and returns it to the subclass constructor.
+3. The subclass constructor takes the instance from the superclass constructor, sets its attribtues, and returns it.
 
 Note that the subclass's constructor should not call `register` when creating a new instance:
 by the time the superclass constructor returns, the new instance has already been registered.
