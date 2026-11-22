@@ -82,8 +82,9 @@ class NamedFrac(Frac):
         return (self.num, self.den, self.__name)
 
 
-class Plain:
-    """Weak-referenceable class with no managed constructor."""
+def new_plain_class() -> type:
+    """Creates a fresh weak-referenceable class with no managed constructor."""
+    return type("Plain", (), {})
 
 
 def lock_is_free() -> bool:
@@ -163,6 +164,7 @@ def test_error_with_existing_instance_releases_lock() -> None:
 
 def test_missing_registration() -> None:
     store = InstanceStore()
+    Plain = new_plain_class()
     with pytest.raises(RuntimeError):
         with store.instance(Plain, 0):
             pass
@@ -174,6 +176,7 @@ def test_missing_registration() -> None:
 
 def test_double_registration() -> None:
     store = InstanceStore()
+    Plain = new_plain_class()
     with pytest.raises(RuntimeError):
         with store.instance(Plain, 0):
             store.register(Plain())
@@ -183,6 +186,7 @@ def test_double_registration() -> None:
 
 def test_wrong_type_registration() -> None:
     store = InstanceStore()
+    Plain = new_plain_class()
     with pytest.raises(TypeError):
         with store.instance(Plain, 0):
             store.register(object())
@@ -191,6 +195,7 @@ def test_wrong_type_registration() -> None:
 
 def test_register_outside_building_is_ignored() -> None:
     store = InstanceStore()
+    Plain = new_plain_class()
     store.register(Plain())
     with store.instance(Plain, 0) as self:
         assert self is None
@@ -201,6 +206,7 @@ def test_register_outside_building_is_ignored() -> None:
 
 def test_instances_are_weakly_held() -> None:
     store = InstanceStore()
+    Plain = new_plain_class()
     with store.instance(Plain, 0):
         store.register(Plain())
     gc.collect()
@@ -279,3 +285,41 @@ def test_optimised_mode() -> None:
         "missing registration rejected",
         "double registration rejected",
     ]
+
+
+class Base:
+    """Flyweight class managed by its own store."""
+
+    _store: ClassVar[InstanceStore] = InstanceStore()
+    """Instance store for the base class hierarchy."""
+
+    __slots__ = ("__weakref__",)
+
+    def __new__(cls, x: int) -> Self:
+        with Base._store.instance(cls, x) as self:
+            if self is None:
+                self = object.__new__(cls)
+                Base._store.register(self)
+            return self
+
+
+class Derived(Base):
+    """Subclass that wrongly manages its instances with a second store."""
+
+    _other_store: ClassVar[InstanceStore] = InstanceStore()
+    """Second instance store, conflicting with the base class store."""
+
+    __slots__ = ()
+
+    def __new__(cls, x: int, name: str) -> Self:
+        with Derived._other_store.instance(cls, (x, name)) as self:
+            if self is None:
+                self = Base.__new__(cls, x)
+            return self
+
+
+def test_class_managed_by_two_stores() -> None:
+    with pytest.raises(RuntimeError, match="already managed"):
+        Derived(1, "a")
+    assert Base(1) is Base(1)
+    assert lock_is_free()

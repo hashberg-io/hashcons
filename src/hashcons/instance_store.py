@@ -22,7 +22,7 @@ from collections.abc import Generator, Hashable
 from contextlib import contextmanager
 from threading import RLock
 from typing import ClassVar, Self, cast, final
-from weakref import WeakValueDictionary
+from weakref import WeakKeyDictionary, WeakValueDictionary
 
 
 @final
@@ -31,6 +31,11 @@ class InstanceStore:
 
     __lock: ClassVar[RLock] = RLock()
     """Lock shared by all instance stores."""
+
+    __managing_stores: ClassVar[WeakKeyDictionary[type, InstanceStore]] = (
+        WeakKeyDictionary()
+    )
+    """Store managing each class, indexed weakly by class."""
 
     __instances: WeakValueDictionary[tuple[type, Hashable], object]
     """Stored instances, indexed by class and instance key."""
@@ -63,6 +68,10 @@ class InstanceStore:
     def instance[T](self, cls: type[T], key: Hashable) -> Generator[T | None]:
         """Manages the creation of the instance with given class and key."""
         with InstanceStore.__lock:
+            if InstanceStore.__managing_stores.setdefault(cls, self) is not self:
+                raise RuntimeError(
+                    f"Class {cls!r} is already managed by another instance store."
+                )
             if self.__instance_to_register is not None:
                 raise RuntimeError(
                     "Context manager 'instance' cannot be called after a managed "

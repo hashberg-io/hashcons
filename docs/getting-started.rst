@@ -68,6 +68,7 @@ Subclasses
 ----------
 
 Instances of different subclasses are stored separately, under the subclass passed to :meth:`~hashcons.instance_store.InstanceStore.instance`.
+A single store manages a whole class hierarchy, and is conventionally attached to its root class: each class is managed by the first store it is used with, and using it with another store raises :exc:`RuntimeError`.
 A subclass constructor enters the context of the superclass's store with its own instance key and, if no instance exists, calls the superclass constructor.
 The superclass constructor's context recognises that an instance is already being built, yields :obj:`None`, and the superclass constructor creates and registers the instance.
 The subclass constructor must not call :meth:`~hashcons.instance_store.InstanceStore.register` itself.

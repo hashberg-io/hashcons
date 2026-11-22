@@ -6,6 +6,7 @@ Published on PyPI and Read the Docs; licensed LGPL-3.0-or-later.
 ## Design
 
 - Instances live in a `WeakValueDictionary` keyed by `(cls, key)`, so flyweight classes must be weak-referenceable.
+- Each class is claimed by the first store whose `instance` it enters (class-level `WeakKeyDictionary` from class to store); entering another store with it raises `RuntimeError`, which catches a store attached below the hierarchy root.
 - One class-level `RLock` is shared by all stores, held for the whole `instance` context; a single global lock avoids lock-ordering deadlocks between stores.
 - While a store is building an instance, every nested `instance` call on that store defers to the outer one (yields `None`); this is what lets subclass constructors call superclass constructors.
   Consequence: constructing a different instance of the same store inside a constructor's context is unsupported (documented limitation, partially detected via the double-`register` check; under discussion for 1.0.0).
