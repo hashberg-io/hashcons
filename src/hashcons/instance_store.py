@@ -63,10 +63,11 @@ class InstanceStore:
     def instance[T](self, cls: type[T], key: Hashable) -> Generator[T | None]:
         """Manages the creation of the instance with given class and key."""
         with InstanceStore.__lock:
-            assert self.__instance_to_register is None, (
-                "Context manager 'instance' cannot be called after a managed "
-                "instance has already been created."
-            )
+            if self.__instance_to_register is not None:
+                raise RuntimeError(
+                    "Context manager 'instance' cannot be called after a managed "
+                    "instance has already been created."
+                )
             if self.__building_instance:
                 yield None
                 return
@@ -78,13 +79,15 @@ class InstanceStore:
             try:
                 yield None
                 instance = self.__instance_to_register
-                assert instance is not None, (
-                    "Context manager signalled that no instance existed, "
-                    "but a fresh instance was not constructed."
-                )
-                assert isinstance(
-                    instance, cls
-                ), f"Instance constructed is not of the expected type {cls!r}."
+                if instance is None:
+                    raise RuntimeError(
+                        "Context manager signalled that no instance existed, "
+                        "but a fresh instance was not registered."
+                    )
+                if not isinstance(instance, cls):
+                    raise TypeError(
+                        f"Instance registered is not of the expected type {cls!r}."
+                    )
                 self.__instances[(cls, key)] = instance
             finally:
                 self.__building_instance = False
@@ -93,7 +96,8 @@ class InstanceStore:
     def register(self, instance: object) -> None:
         """Registers the fresh instance for the active building process."""
         if self.__building_instance:
-            assert (
-                self.__instance_to_register is None
-            ), "Method 'register' can be called once per instance built."
+            if self.__instance_to_register is not None:
+                raise RuntimeError(
+                    "Method 'register' can be called once per instance built."
+                )
             self.__instance_to_register = instance

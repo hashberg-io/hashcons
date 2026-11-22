@@ -163,7 +163,7 @@ def test_error_with_existing_instance_releases_lock() -> None:
 
 def test_missing_registration() -> None:
     store = InstanceStore()
-    with pytest.raises(AssertionError):
+    with pytest.raises(RuntimeError):
         with store.instance(Plain, 0):
             pass
     assert store.get(Plain, 0) is None
@@ -174,7 +174,7 @@ def test_missing_registration() -> None:
 
 def test_double_registration() -> None:
     store = InstanceStore()
-    with pytest.raises(AssertionError):
+    with pytest.raises(RuntimeError):
         with store.instance(Plain, 0):
             store.register(Plain())
             store.register(Plain())
@@ -183,7 +183,7 @@ def test_double_registration() -> None:
 
 def test_wrong_type_registration() -> None:
     store = InstanceStore()
-    with pytest.raises(AssertionError):
+    with pytest.raises(TypeError):
         with store.instance(Plain, 0):
             store.register(object())
     assert store.get(Plain, 0) is None
@@ -235,24 +235,47 @@ def test_concurrent_construction() -> None:
     assert all(r is results[0] for r in results)
 
 
+OPTIMISED_MODE_SCRIPT = """
+from hashcons import InstanceStore
+class A: pass
+store = InstanceStore()
+with store.instance(A, 0) as a:
+    a = A()
+    store.register(a)
+print("ok" if store.get(A, 0) is a else "missing")
+try:
+    with store.instance(A, 1):
+        store.register(object())
+except TypeError:
+    print("wrong type rejected")
+try:
+    with store.instance(A, 2):
+        pass
+except RuntimeError:
+    print("missing registration rejected")
+try:
+    with store.instance(A, 3):
+        store.register(A())
+        store.register(A())
+except RuntimeError:
+    print("double registration rejected")
+"""
+"""Script exercising the store with assertions disabled."""
+
+
 def test_optimised_mode() -> None:
-    script = (
-        "from hashcons import InstanceStore\n"
-        "class A: pass\n"
-        "store = InstanceStore()\n"
-        "with store.instance(A, 0) as a:\n"
-        "    a = A()\n"
-        "    store.register(a)\n"
-        "assert store.get(A, 0) is a or print('missing')\n"
-        "print('ok')\n"
-    )
     src = Path(__file__).parent.parent / "src"
     result = subprocess.run(
-        [sys.executable, "-O", "-c", script],
+        [sys.executable, "-O", "-c", OPTIMISED_MODE_SCRIPT],
         capture_output=True,
         text=True,
         env=os.environ | {"PYTHONPATH": str(src)},
         check=False,
     )
     assert result.returncode == 0, result.stderr
-    assert result.stdout.strip() == "ok"
+    assert result.stdout.splitlines() == [
+        "ok",
+        "wrong type rejected",
+        "missing registration rejected",
+        "double registration rejected",
+    ]

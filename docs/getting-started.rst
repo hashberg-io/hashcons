@@ -101,6 +101,6 @@ Thread safety and validation
 ----------------------------
 
 All instance stores share a single re-entrant lock, held for the duration of each :meth:`~hashcons.instance_store.InstanceStore.instance` context, so construction is thread-safe.
-Misuse of the store, such as failing to register a fresh instance, registering twice, or registering an instance of the wrong class, is detected by assertions, which are removed when running with the `-O flag <https://docs.python.org/3/using/cmdline.html#cmdoption-O>`_.
+Misuse of the store raises an exception: :exc:`RuntimeError` for failing to register a fresh instance, registering twice, or re-entering the store after registration, and :exc:`TypeError` for registering an instance of the wrong class.
 
 GitHub repo: https://github.com/hashberg-io/hashcons
