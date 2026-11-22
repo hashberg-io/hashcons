@@ -9,6 +9,7 @@ import json
 import os
 import pkgutil
 import sys
+import types
 from dataclasses import dataclass, field
 from types import ModuleType
 from typing import Any, Callable, TypeAliasType
@@ -200,6 +201,12 @@ class MakeApiConfig:
             return cls.from_dict(json.load(f))
 
 
+def _is_lazy_import(obj: Any) -> bool:
+    """Checks whether the given object is a pending lazy import."""
+    lazy_import_type = getattr(types, "LazyImportType", None)
+    return lazy_import_type is not None and isinstance(obj, lazy_import_type)
+
+
 def _collect_type_aliases(
     manual: dict[str, list[str]], modules_dict: dict[str, ModuleType]
 ) -> dict[str, list[str]]:
@@ -325,10 +332,15 @@ def make_apidocs() -> None:
             )
             if to_exclude:
                 continue
-            member = getattr(mod, member_name)
             if member_name.startswith("_") and not to_include:
                 continue
-            member = getattr(mod, member_name)
+            try:
+                member = getattr(mod, member_name)
+            except ImportError as e:
+                if not _is_lazy_import(vars(mod).get(member_name)):
+                    raise
+                print(f"    skipped {member_name} (unresolved lazy import: {e})")
+                continue
             member_module = inspect.getmodule(member)
             member_module_name = (
                 member_module.__name__ if member_module is not None else None
