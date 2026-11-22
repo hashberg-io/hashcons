@@ -3,7 +3,7 @@ name = "hashcons"
 dynamic = ["version"]
 authors = [{ name = "Hashberg" }]
 description = "Hash consing for flyweight instance management."
-readme = { file = "README.rst", content-type = "text/x-rst" }
+readme = "README.md"
 requires-python = ">=3.15"
 license = "LGPL-2.1-or-later"
 license-files = ["LICENSE"]
@@ -45,7 +45,7 @@ only-include = ["src/hashcons"]
 sources = ["src"]
 
 [tool.hatch.build.targets.sdist]
-only-include = ["src/hashcons", "tests", "README.rst", "LICENSE"]
+only-include = ["src/hashcons", "tests", "README.md", "LICENSE"]
 
 [dependency-groups]
 dev = ["mypy", "black", "pytest"]
