@@ -16,7 +16,7 @@ Published on PyPI and Read the Docs; licensed LGPL-3.0-or-later.
 
 - Python 3.15 only; PEP 695 generics, `typing.Self`, no runtime dependencies.
 - Docstrings are one sentence; narrative documentation lives in `docs/getting-started.rst` and `README.md`.
-- Docs tooling (`autodoc_typehints.py`, `docs/conf.py`, `docs/make-api.py`) is copied from `hashberg-io/sphinx-docscripts`; it does not resolve PEP 695 function type parameters, so `T` is listed in `skip_missing_references`.
+- Docs tooling (`autodoc_typehints.py`, `docs/conf.py`, `docs/make-api.py`) is copied from `hashberg-io/sphinx-docscripts`; Read the Docs builds on Python 3.14 (no 3.15 there yet), so the package source must stay importable on 3.14, which is untested locally.
   Rebuild with `python make-api.py`, then `sphinx-build -M html . _build`, from `docs/`.
 
 ## Checks

@@ -130,7 +130,7 @@ html_theme = "sphinx_rtd_theme"
 # html_static_path = ['_static']
 
 # Set of problematic references to ignore, i.e. not warn about when missing.
-skip_missing_references: set[str] = {"T"}
+skip_missing_references: set[str] = set()
 
 # Set of descriptors to be documented as properties.
 property_descriptors: set[str] = set()
