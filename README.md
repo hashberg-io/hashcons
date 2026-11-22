@@ -96,4 +96,4 @@ The full API documentation is available at [hashcons.readthedocs.io](https://has
 
 ## License
 
-[LGPL-2.1-or-later](LICENSE) © Hashberg Ltd.
+[LGPL-3.0-or-later](LICENSE) © Hashberg Ltd.
