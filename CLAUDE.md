@@ -16,7 +16,7 @@ Published on PyPI and Read the Docs; licensed LGPL-3.0-or-later.
 
 - Python 3.14 and 3.15 supported (3.14 also because Read the Docs has no 3.15 yet); PEP 695 generics, `typing.Self`, no runtime dependencies.
 - Docstrings are one sentence; narrative documentation lives in `docs/getting-started.rst` and `README.md`.
-- Docs tooling (`autodoc_typehints.py`, `docs/conf.py`, `docs/make-api.py`) is copied from `hashberg-io/sphinx-docscripts`; Read the Docs builds on Python 3.14, and CI builds the docs on 3.14 with warnings as errors.
+- Docs tooling (`autodoc_typehints.py`, `docs/conf.py`, `docs/make-api.py`) is copied from `hashberg-io/sphinx-docscripts` (`docs/conf.py` imports the package from `pkg_path` in `docs/make-api.json`, i.e. `../src`); Read the Docs builds on Python 3.14, and CI builds the docs on 3.14 with warnings as errors.
   Rebuild with `python make-api.py`, then `sphinx-build -M html . _build`, from `docs/`.
 
 ## Checks
