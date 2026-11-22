@@ -238,6 +238,49 @@ class UnmanagedChild(Unmanaged):
             return self
 
 
+class Sibling:
+    """Flyweight whose constructor builds same-class instances at a given stage."""
+
+    _store: ClassVar[InstanceStore] = InstanceStore()
+    """Instance store for siblings."""
+
+    __peer: Sibling | None
+
+    __slots__ = ("__weakref__", "__peer")
+
+    def __new__(cls, key: int, stage: str = "") -> Self:
+        if stage == "before-context":
+            cls(key + 100)
+        with Sibling._store.instance(cls, key) as self:
+            if self is None:
+                self = object.__new__(cls)
+                self.__peer = cls(key + 100) if stage == "inside-context" else None
+                Sibling._store.register(self)
+            return self
+
+    @property
+    def peer(self) -> Sibling | None:
+        """Peer instance."""
+        return self.__peer
+
+
+class StagedSibling(Sibling):
+    """Subclass building same-class instances at a given stage of its super context."""
+
+    __slots__ = ()
+
+    def __new__(cls, key: int, stage: str = "") -> Self:
+        with Sibling._store.instance(cls, (key, stage)) as self:
+            if self is None:
+                with Sibling._store.super():
+                    if stage == "before-super":
+                        cls(key + 100)
+                    self = Sibling.__new__(cls, key, stage)
+                    if stage == "after-super":
+                        cls(key + 200)
+            return self
+
+
 def lock_is_free() -> bool:
     """Checks whether another thread can construct a fresh instance."""
     result: list[Frac] = []
@@ -512,8 +555,23 @@ def test_super_after_registration() -> None:
 def test_nested_super() -> None:
     store = InstanceStore()
     Plain = new_plain_class()
-    with pytest.raises(RuntimeError, match="cannot be nested"):
+    with pytest.raises(RuntimeError, match="can only be nested"):
         with store.instance(Plain, 0):
             with store.super():
                 with store.super():
                     pass
+
+
+@pytest.mark.parametrize("stage", ["before-super", "after-super", "before-context"])
+def test_same_class_construction_within_super(stage: str) -> None:
+    with pytest.raises(RuntimeError, match="constructed again"):
+        StagedSibling(1, stage)
+    assert Sibling._store.get(StagedSibling, (1, stage)) is None
+    assert lock_is_free()
+
+
+def test_same_class_construction_inside_superclass_context() -> None:
+    x = StagedSibling(2, "inside-context")
+    assert type(x) is StagedSibling
+    assert x is StagedSibling(2, "inside-context")
+    assert x.peer is StagedSibling(102)

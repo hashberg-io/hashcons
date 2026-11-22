@@ -20,9 +20,24 @@
 
 from collections.abc import Generator, Hashable
 from contextlib import contextmanager
+from enum import Enum, auto
 from threading import RLock
 from typing import ClassVar, Self, cast, final
 from weakref import WeakValueDictionary
+
+
+@final
+class _SuperState(Enum):
+    """State of a super context."""
+
+    PENDING = auto()
+    """Awaiting the superclass constructor's instance context."""
+
+    JOINED = auto()
+    """Inside the superclass constructor's instance context."""
+
+    DONE = auto()
+    """After the superclass constructor's instance context."""
 
 
 @final
@@ -41,15 +56,15 @@ class InstanceStore:
     __build_instances: list[object | None]
     """Fresh instances registered by the active builds, innermost last."""
 
-    __build_super_pending: list[bool]
-    """Whether each active build awaits a superclass constructor, innermost last."""
+    __build_super_states: list[list[_SuperState]]
+    """States of the super contexts of the active builds, innermost last."""
 
     __slots__ = (
         "__weakref__",
         "__instances",
         "__build_classes",
         "__build_instances",
-        "__build_super_pending",
+        "__build_super_states",
     )
 
     def __new__(cls) -> Self:
@@ -57,7 +72,7 @@ class InstanceStore:
         store.__instances = WeakValueDictionary()
         store.__build_classes = []
         store.__build_instances = []
-        store.__build_super_pending = []
+        store.__build_super_states = []
         return store
 
     def get[T](self, cls: type[T], key: Hashable) -> T | None:
@@ -68,21 +83,27 @@ class InstanceStore:
     def instance[T](self, cls: type[T], key: Hashable) -> Generator[T | None]:
         """Manages the creation of the instance with given class and key."""
         with InstanceStore.__lock:
-            if (
-                self.__build_super_pending
-                and self.__build_super_pending[-1]
-                and self.__build_classes[-1] is cls
-            ):
-                self.__build_super_pending[-1] = False
-                yield None
-                return
+            if self.__build_classes and self.__build_classes[-1] is cls:
+                states = self.__build_super_states[-1]
+                if states and states[-1] is _SuperState.PENDING:
+                    states[-1] = _SuperState.JOINED
+                    try:
+                        yield None
+                    finally:
+                        states[-1] = _SuperState.DONE
+                    return
+                if states and states[-1] is _SuperState.DONE:
+                    raise RuntimeError(
+                        "The class being built cannot be constructed again within "
+                        "a 'super' context."
+                    )
             existing_instance = self.get(cls, key)
             if existing_instance is not None:
                 yield existing_instance
                 return
             self.__build_classes.append(cls)
             self.__build_instances.append(None)
-            self.__build_super_pending.append(False)
+            self.__build_super_states.append([])
             try:
                 yield None
                 instance = self.__build_instances[-1]
@@ -99,7 +120,7 @@ class InstanceStore:
             finally:
                 self.__build_classes.pop()
                 self.__build_instances.pop()
-                self.__build_super_pending.pop()
+                self.__build_super_states.pop()
 
     @contextmanager
     def super(self) -> Generator[None]:
@@ -110,19 +131,22 @@ class InstanceStore:
                     "Context manager 'super' must be entered while building an "
                     "instance, before it is registered."
                 )
-            if self.__build_super_pending[-1]:
-                raise RuntimeError("Context manager 'super' cannot be nested.")
-            depth = len(self.__build_classes)
-            self.__build_super_pending[-1] = True
+            states = self.__build_super_states[-1]
+            if states and states[-1] is not _SuperState.JOINED:
+                raise RuntimeError(
+                    "Context manager 'super' can only be nested within a "
+                    "superclass constructor."
+                )
+            states.append(_SuperState.PENDING)
             try:
                 yield
-                if self.__build_super_pending[depth - 1]:
+                if states[-1] is _SuperState.PENDING:
                     raise RuntimeError(
                         "Superclass constructor did not enter the instance context "
                         "for the class being built."
                     )
             finally:
-                self.__build_super_pending[depth - 1] = False
+                states.pop()
 
     def register(self, instance: object) -> None:
         """Registers the fresh instance for the innermost active build."""
