@@ -1,6 +1,4 @@
+sphinx>=7.4
 sphinx_rtd_theme
 sphinx_autodoc_typehints
-
-hashcons
 typing_extensions
-typed_descriptors
