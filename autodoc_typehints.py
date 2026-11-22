@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 import annotationlib
+import builtins
 from collections import deque
 from collections.abc import Callable, Iterable, Iterator, Mapping
 from dataclasses import dataclass
@@ -92,7 +93,19 @@ class ParsedType:
         name, args, variadic = self.name, self.args, self.variadic
         if name in type_params and args is None:
             return f"``{name}``"
+        if name == "..." and args is None:
+            return "..."
+        if not name:
+            assert isinstance(args, tuple)
+            return (
+                "[" + ", ".join(a.crossref(globalns, type_params) for a in args) + "]"
+            )
         role = "obj"
+        external = ""
+        if name.startswith("builtins.") and hasattr(builtins, name[9:]):
+            name = name[9:]
+            globalns = {**globalns, name: getattr(builtins, name)}
+            external = "external+python:py:"
         if name in globalns:
             obj = _resolve_lazy(globalns[name])
             if isinstance(obj, ModuleType):
@@ -104,7 +117,7 @@ class ParsedType:
                     role = "class"
             elif isinstance(obj, FunctionType):
                 role = "func"
-        name_crossref = f":{role}:`{name}`"
+        name_crossref = f":{external}{role}:`{name}`"
         if args is None:
             return name_crossref
         if name in ("UnionType", "types.UnionType"):
@@ -251,12 +264,7 @@ def _parse_type_args(
     variadic = False
     for i, r in enumerate(arg_ranges):
         arg = _parse_type(annotation, r.start, r.stop)
-        if arg.name == "...":
-            if i < len(arg_ranges) - 1:
-                raise ValueError(
-                    "Ellipsis found in args, but not in last position, at "
-                    f"{start = }, {stop = }, {annotation[start:stop] = }, {annotation = }"
-                )
+        if arg.name == "..." and i == len(arg_ranges) - 1 and i > 0:
             variadic = True
             break
         args.append(arg)
@@ -291,11 +299,8 @@ def _parse_atom_type(annotation: str, start: int, stop: int) -> ParsedType:
         return _parsed_type(
             annotation, start, stop, name, annotation[r.start + 1 : r.stop - 1]
         )
-    if not name:
-        raise ValueError(
-            f"Found empty type name at "
-            f"{start = }, {stop = }, {annotation[start:stop] = }, {annotation = }"
-        )
+    if not name and not annotation[r.start + 1 : r.stop - 1].strip():
+        return _parsed_type(annotation, start, stop, name, ())
     args, variadic = _parse_type_args(annotation, r.start + 1, r.stop - 1)
     return _parsed_type(annotation, start, stop, name, args, variadic)
 

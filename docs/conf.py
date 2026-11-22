@@ -22,8 +22,11 @@ from sphinx.environment import BuildEnvironment
 from sphinx.addnodes import pending_xref
 import sphinx_rtd_theme  # type: ignore # noqa
 
+# The project root holds the autodoc_typehints.py extension; the package itself is
+# imported from the "pkg_path" in make-api.json, exactly as make-api.py does.
 sys.path.insert(0, os.path.abspath(".."))
-sys.path.insert(0, os.path.abspath("../src"))
+with open("make-api.json", "r") as f:
+    sys.path.insert(0, os.path.abspath(json.load(f)["pkg_path"]))
 
 # -- Project information -----------------------------------------------------
 
