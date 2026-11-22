@@ -1,6 +1,6 @@
 # hashcons
 
-[![Python versions](https://img.shields.io/badge/python-3.15+-green.svg)](https://docs.python.org/3.15/)
+[![Python versions](https://img.shields.io/badge/python-3.14+-green.svg)](https://docs.python.org/3.14/)
 [![PyPI version](https://img.shields.io/pypi/v/hashcons.svg)](https://pypi.python.org/pypi/hashcons/)
 [![PyPI status](https://img.shields.io/pypi/status/hashcons.svg)](https://pypi.python.org/pypi/hashcons/)
 [![Checked with Mypy](http://www.mypy-lang.org/static/mypy_badge.svg)](https://github.com/python/mypy)
@@ -17,7 +17,7 @@ Install the latest release from [PyPI](https://pypi.org/project/hashcons/):
 $ pip install --upgrade hashcons
 ```
 
-The library requires Python 3.15 or later.
+The library requires Python 3.14 or later.
 
 ## Usage
 

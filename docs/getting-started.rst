@@ -8,7 +8,7 @@ You can install the latest release from `PyPI <https://pypi.org/project/hashcons
 
     $ pip install -U hashcons
 
-The library requires Python 3.15 or later.
+The library requires Python 3.14 or later.
 
 Flyweight classes
 -----------------
