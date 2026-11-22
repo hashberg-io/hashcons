@@ -1,4 +1,4 @@
 docs/* linguist-documentation
 htmlcov/* linguist-vendored
-test/* linguist-vendored
+tests/* linguist-vendored
 *.bat -linguist-detectable

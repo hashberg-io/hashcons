@@ -1,6 +1,6 @@
-"""
-Simple implementation of flyweight instance management using hash consing.
-"""
+# SPDX-License-Identifier: LGPL-2.1-or-later
+
+"""Hash consing for flyweight instance management."""
 
 # HashCons: hash consing for flyweight classes
 # Copyright (C) 2024 Hashberg Ltd
@@ -22,6 +22,6 @@ Simple implementation of flyweight instance management using hash consing.
 
 from .instance_store import InstanceStore
 
-__all__ = (
-    "InstanceStore",
-)
+__version__ = "0.2.0"
+
+__all__ = ("InstanceStore",)

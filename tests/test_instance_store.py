@@ -214,13 +214,19 @@ def test_pickle_round_trip() -> None:
     assert pickle.loads(pickle.dumps(y)) is y
 
 
+def construct_after_barrier(barrier: threading.Barrier, results: list[Frac]) -> None:
+    """Constructs a shared fraction once all threads reach the barrier."""
+    barrier.wait()
+    results.append(Frac(123, 456))
+
+
 def test_concurrent_construction() -> None:
     barrier = threading.Barrier(16)
     results: list[Frac] = []
-    def construct() -> None:
-        barrier.wait()
-        results.append(Frac(123, 456))
-    threads = [threading.Thread(target=construct) for _ in range(16)]
+    threads = [
+        threading.Thread(target=construct_after_barrier, args=(barrier, results))
+        for _ in range(16)
+    ]
     for thread in threads:
         thread.start()
     for thread in threads:
