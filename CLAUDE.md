@@ -1,7 +1,7 @@
 # hashcons
 
 Hash consing for flyweight classes: a single public class, `InstanceStore` in `src/hashcons/instance_store.py`, re-exported from `hashcons`.
-Published on PyPI and Read the Docs; licensed LGPL-2.1-or-later (kept as-is, not the house default).
+Published on PyPI and Read the Docs; licensed LGPL-3.0-or-later.
 
 ## Design
 
