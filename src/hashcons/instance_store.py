@@ -139,7 +139,7 @@ class InstanceStore:
         2. The value :obj:`None` is yielded, to signal to the context
            that no instance with the given key exists yet.
         3. Once control is returned to the context manager, it checks
-           that an instance was registered using the :meth`register` method,
+           that an instance was registered using the :meth:`register` method,
            and that it is actually an instance of the given class.
         4. If the checks from Step 3 are successful, the instance is stored
            using the given class and key.
@@ -164,48 +164,41 @@ class InstanceStore:
         `-O flag <https://docs.python.org/3/using/cmdline.html#cmdoption-O>`_.
 
         """
-        InstanceStore.__lock.acquire()
-        assert self.__instance_to_register is None, (
-            "Context manager 'instance' cannot be called after a managed "
-            "instance has already been created."
-        )
-        # Instance is already been built within another context, defer to it:
-        if self.__building_instance:
-            yield None
-            InstanceStore.__lock.release()
-            return
-        # If an instance with the given key already exists, return it:
-        existing_instance = cast(T_co, self.__instances.get((cls, key)))
-        if existing_instance is not None:
-            yield existing_instance
-            InstanceStore.__lock.release()
-            return
-        # Start the instance building process:
-        self.__building_instance = True
-        try:
-            # Signal that no instance exists:
-            yield None
-            # Ensure that an instance was actually constructed:
-            assert (instance := self.__instance_to_register) is not None, (
-                "Context manager signalled that no instance existed, "
-                "but a fresh instance was not constructed."
+        with InstanceStore.__lock:
+            assert self.__instance_to_register is None, (
+                "Context manager 'instance' cannot be called after a managed "
+                "instance has already been created."
             )
-            # Ensure that the instance is of the correct type:
-            assert isinstance(
-                instance, cls
-            ), f"Instance constructed is not of the expected type {cls!r}."
-            # If we get here, construction was successful and we must register:
-            self.__instances[(cls, key)] = instance
-        except BaseException as e:
-            # Unregister the instance if an error occurs after registration:
-            if (cls, key) in self.__instances:
-                del self.__instances[(cls, key)]
-            raise e
-        finally:
-            # Terminate the instance building process:
-            self.__building_instance = False
-            self.__instance_to_register = None
-            InstanceStore.__lock.release()
+            # Instance is being built within another context, defer to it:
+            if self.__building_instance:
+                yield None
+                return
+            # If an instance with the given key already exists, return it:
+            existing_instance = self.get(cls, key)
+            if existing_instance is not None:
+                yield existing_instance
+                return
+            # Start the instance building process:
+            self.__building_instance = True
+            try:
+                # Signal that no instance exists:
+                yield None
+                instance = self.__instance_to_register
+                # Ensure that an instance was actually constructed:
+                assert instance is not None, (
+                    "Context manager signalled that no instance existed, "
+                    "but a fresh instance was not constructed."
+                )
+                # Ensure that the instance is of the correct type:
+                assert isinstance(
+                    instance, cls
+                ), f"Instance constructed is not of the expected type {cls!r}."
+                # If we get here, construction was successful and we must register:
+                self.__instances[(cls, key)] = instance
+            finally:
+                # Terminate the instance building process:
+                self.__building_instance = False
+                self.__instance_to_register = None
 
     def register(self, instance: Any) -> None:
         """
