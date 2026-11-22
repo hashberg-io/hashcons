@@ -4,7 +4,7 @@
 [![PyPI version](https://img.shields.io/pypi/v/hashcons.svg)](https://pypi.python.org/pypi/hashcons/)
 [![PyPI status](https://img.shields.io/pypi/status/hashcons.svg)](https://pypi.python.org/pypi/hashcons/)
 [![Checked with Mypy](http://www.mypy-lang.org/static/mypy_badge.svg)](https://github.com/python/mypy)
-[![Documentation Status](https://readthedocs.org/projects/hashcons/badge/?version=latest)](https://hashcons.readthedocs.io/en/latest/?badge=latest)
+[![Documentation Status](https://img.shields.io/readthedocs/hashcons/latest)](https://hashcons.readthedocs.io/en/latest/)
 [![Python package status](https://github.com/hashberg-io/hashcons/actions/workflows/python.yml/badge.svg)](https://github.com/hashberg-io/hashcons/actions/workflows/python.yml)
 
 A simple implementation of flyweight instance management using hash consing: an `InstanceStore` guarantees that a flyweight class has at most one live instance for each instance key, holding instances weakly and supporting subclassing, pickling and concurrent construction.
