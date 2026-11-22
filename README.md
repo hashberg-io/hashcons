@@ -57,7 +57,7 @@ assert x is not MyFrac(3, 10)
 ```
 
 Instances of different subclasses are stored separately.
-A subclass constructor enters the superclass store's `instance` context with its own key and, if no instance exists, calls the superclass constructor, which creates and registers the instance: the subclass must not call `register` itself.
+A subclass constructor enters the superclass store's `instance` context with its own key and, if no instance exists, calls the superclass constructor within the store's `super` context: the superclass constructor then creates and registers the instance, and the subclass must not call `register` itself.
 Validation can happen both before and after the superclass constructor call.
 
 ```python
@@ -70,7 +70,8 @@ class MyNamedFrac(MyFrac):
     def __new__(cls, num: int, den: int, name: str) -> Self:
         with MyFrac._store.instance(cls, (num, den, name)) as self:
             if self is None:
-                self = MyFrac.__new__(cls, num, den)
+                with MyFrac._store.super():
+                    self = MyFrac.__new__(cls, num, den)
                 self.__name = name
             return self
 
@@ -80,8 +81,8 @@ assert y is MyNamedFrac(10, 3, "y")
 assert y is not MyNamedFrac(10, 3, "z")
 ```
 
-A constructor must not construct other instances managed by the same store from inside its `instance` context; construct them before entering it.
-Pickling support, thread safety and validation are covered in the [getting-started guide](https://hashcons.readthedocs.io/en/latest/getting-started.html).
+Constructors can construct other instances managed by the same store at any point, including instances of their own class, except within a `super` context.
+Nested construction, pickling support, thread safety and validation are covered in the [getting-started guide](https://hashcons.readthedocs.io/en/latest/getting-started.html).
 
 ## API
 

@@ -7,9 +7,13 @@ Published on PyPI and Read the Docs; licensed LGPL-3.0-or-later.
 
 - Instances live in a `WeakValueDictionary` keyed by `(cls, key)`, so flyweight classes must be weak-referenceable.
 - One class-level `RLock` is shared by all stores, held for the whole `instance` context; a single global lock avoids lock-ordering deadlocks between stores.
-- While a store is building an instance, every nested `instance` call on that store defers to the outer one (yields `None`); this is what lets subclass constructors call superclass constructors.
-  Consequence: constructing a different instance of the same store inside a constructor's context is unsupported (documented limitation, no runtime detection beyond the double-`register` assertion).
-- Misuse is detected by assertions only (stripped under `-O`), by design for performance; the code must still behave sensibly under `-O` (`test_optimised_mode`).
+- Each store keeps a stack of active builds (class, registered instance, super-context states); every `instance` call outside a `super` context does its own lookup and build, so nested construction from the same store works anywhere.
+- Subclass constructors mark the superclass constructor call with `with store.super():`; the next `instance` call for the class being built joins the enclosing build instead of starting one.
+  A `super` context accepts exactly one such call (states pending, joined, done); a further same-class `instance` call once done raises, which closes the ambiguous window between entering `super` and the superclass's `instance` call.
+  A call form (`store.super(ctor, cls, ...)`), implicit joining and a two-phase key/initialiser protocol were considered and rejected.
+- A constructor returning a nested instance without registering one fails ("not registered"); explicitly registering an already-stored instance under a second key is accepted but deliberately undocumented.
+- How stores are attached to class hierarchies is the user's business: the library does not check that a class is managed by a single store.
+- Misuse raises `RuntimeError`/`TypeError`, never `assert`, and `register` outside a build raises: checks critical to the store's logic must survive `-O` (`test_optimised_mode`).
 - The lock is acquired via `with` inside the generator, so it is released on every exit path, including exceptions thrown into the context.
 
 ## Conventions
