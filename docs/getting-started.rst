@@ -68,8 +68,8 @@ Subclasses
 ----------
 
 Instances of different subclasses are stored separately, under the subclass passed to :meth:`~hashcons.instance_store.InstanceStore.instance`.
-A subclass constructor enters the context of the superclass's store with its own instance key and, if no instance exists, calls the superclass constructor.
-The superclass constructor's context recognises that an instance is already being built, yields :obj:`None`, and the superclass constructor creates and registers the instance.
+A subclass constructor enters the :meth:`~hashcons.instance_store.InstanceStore.instance` context of the superclass's store with its own instance key and, if no instance exists, calls the superclass constructor within the store's :meth:`~hashcons.instance_store.InstanceStore.super` context.
+The superclass constructor's :meth:`~hashcons.instance_store.InstanceStore.instance` context then joins the build of the subclass instance: it yields :obj:`None`, and the superclass constructor creates and registers the instance.
 The subclass constructor must not call :meth:`~hashcons.instance_store.InstanceStore.register` itself.
 Validation can be performed both before and after the superclass constructor call: if the subclass context exits with an exception, the instance is not stored.
 
@@ -84,12 +84,41 @@ Validation can be performed both before and after the superclass constructor cal
         def __new__(cls, num: int, den: int, name: str) -> Self:
             with MyFrac._store.instance(cls, (num, den, name)) as self:
                 if self is None:
-                    self = MyFrac.__new__(cls, num, den)
+                    with MyFrac._store.super():
+                        self = MyFrac.__new__(cls, num, den)
                     self.__name = name
                 return self
 
-While an instance is being built, the store treats every nested :meth:`~hashcons.instance_store.InstanceStore.instance` call as part of the same building process.
-A constructor must therefore not construct other instances managed by the same store from inside its context: any such instances must be constructed before the context is entered.
+A :meth:`~hashcons.instance_store.InstanceStore.super` context accepts exactly one :meth:`~hashcons.instance_store.InstanceStore.instance` context for the class being built, namely that of the superclass constructor.
+Constructing another instance of the class being built within a :meth:`~hashcons.instance_store.InstanceStore.super` context, other than from within the superclass constructor's own :meth:`~hashcons.instance_store.InstanceStore.instance` context, raises :exc:`RuntimeError`.
+
+Nested construction
+-------------------
+
+Outside of :meth:`~hashcons.instance_store.InstanceStore.super` contexts, every :meth:`~hashcons.instance_store.InstanceStore.instance` context runs its own lookup and build, so constructors can construct other instances managed by the same store, including instances of their own class, at any point.
+
+.. code-block:: python
+
+    class Node:
+
+        _store: ClassVar[InstanceStore] = InstanceStore()
+
+        __value: int
+        __child: Node | None
+
+        __slots__ = ("__weakref__", "__value", "__child")
+
+        def __new__(cls, value: int) -> Self:
+            with Node._store.instance(cls, value) as self:
+                if self is None:
+                    self = object.__new__(cls)
+                    self.__value = value
+                    self.__child = Node(value - 1) if value > 0 else None
+                    Node._store.register(self)
+                return self
+
+A constructor which returns an instance other than the one it registers, e.g. a normalised instance constructed within its context, fails with :exc:`RuntimeError`, because its own build ends with no registered instance.
+Normalisation of constructor arguments is performed before the :meth:`~hashcons.instance_store.InstanceStore.instance` context is entered, so that the instance key is the normalised one.
 
 Pickling
 --------
@@ -101,6 +130,14 @@ Thread safety and validation
 ----------------------------
 
 All instance stores share a single re-entrant lock, held for the duration of each :meth:`~hashcons.instance_store.InstanceStore.instance` context, so construction is thread-safe.
-Misuse of the store raises an exception: :exc:`RuntimeError` for failing to register a fresh instance, registering twice, or re-entering the store after registration, and :exc:`TypeError` for registering an instance of the wrong class.
+Misuse of the store raises an exception, also when running with the `-O flag <https://docs.python.org/3/using/cmdline.html#cmdoption-O>`_: :exc:`TypeError` for registering an instance of the wrong class, and :exc:`RuntimeError` for failing to register a fresh instance, registering twice, registering outside a build, and misuse of :meth:`~hashcons.instance_store.InstanceStore.super` contexts.
+
+Upgrading from 0.1
+------------------
+
+- Subclass constructors wrap their call to the superclass constructor in the store's :meth:`~hashcons.instance_store.InstanceStore.super` context; without it, construction fails with :exc:`RuntimeError`.
+- Nested :meth:`~hashcons.instance_store.InstanceStore.instance` contexts outside of :meth:`~hashcons.instance_store.InstanceStore.super` contexts are independent builds, rather than being joined to the enclosing build.
+- Misuse raises :exc:`RuntimeError` or :exc:`TypeError` instead of :exc:`AssertionError`, and calling :meth:`~hashcons.instance_store.InstanceStore.register` outside a build raises instead of being ignored.
+- The library requires Python 3.14 or later, and no longer depends on ``typing_extensions``.
 
 GitHub repo: https://github.com/hashberg-io/hashcons
