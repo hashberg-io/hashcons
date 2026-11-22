@@ -35,24 +35,29 @@ class InstanceStore:
     __instances: WeakValueDictionary[tuple[type, Hashable], object]
     """Stored instances, indexed by class and instance key."""
 
-    __building_instance: bool
-    """Whether an instance building process is active."""
+    __build_classes: list[type]
+    """Classes of the active builds, innermost last."""
 
-    __instance_to_register: object | None
-    """Fresh instance registered by the active building process, if any."""
+    __build_instances: list[object | None]
+    """Fresh instances registered by the active builds, innermost last."""
+
+    __build_super_pending: list[bool]
+    """Whether each active build awaits a superclass constructor, innermost last."""
 
     __slots__ = (
         "__weakref__",
         "__instances",
-        "__building_instance",
-        "__instance_to_register",
+        "__build_classes",
+        "__build_instances",
+        "__build_super_pending",
     )
 
     def __new__(cls) -> Self:
         store = object.__new__(cls)
         store.__instances = WeakValueDictionary()
-        store.__building_instance = False
-        store.__instance_to_register = None
+        store.__build_classes = []
+        store.__build_instances = []
+        store.__build_super_pending = []
         return store
 
     def get[T](self, cls: type[T], key: Hashable) -> T | None:
@@ -63,22 +68,24 @@ class InstanceStore:
     def instance[T](self, cls: type[T], key: Hashable) -> Generator[T | None]:
         """Manages the creation of the instance with given class and key."""
         with InstanceStore.__lock:
-            if self.__instance_to_register is not None:
-                raise RuntimeError(
-                    "Context manager 'instance' cannot be called after a managed "
-                    "instance has already been created."
-                )
-            if self.__building_instance:
+            if (
+                self.__build_super_pending
+                and self.__build_super_pending[-1]
+                and self.__build_classes[-1] is cls
+            ):
+                self.__build_super_pending[-1] = False
                 yield None
                 return
             existing_instance = self.get(cls, key)
             if existing_instance is not None:
                 yield existing_instance
                 return
-            self.__building_instance = True
+            self.__build_classes.append(cls)
+            self.__build_instances.append(None)
+            self.__build_super_pending.append(False)
             try:
                 yield None
-                instance = self.__instance_to_register
+                instance = self.__build_instances[-1]
                 if instance is None:
                     raise RuntimeError(
                         "Context manager signalled that no instance existed, "
@@ -90,14 +97,41 @@ class InstanceStore:
                     )
                 self.__instances[(cls, key)] = instance
             finally:
-                self.__building_instance = False
-                self.__instance_to_register = None
+                self.__build_classes.pop()
+                self.__build_instances.pop()
+                self.__build_super_pending.pop()
+
+    @contextmanager
+    def super(self) -> Generator[None]:
+        """Joins the next instance context for the class being built to its build."""
+        with InstanceStore.__lock:
+            if not self.__build_classes or self.__build_instances[-1] is not None:
+                raise RuntimeError(
+                    "Context manager 'super' must be entered while building an "
+                    "instance, before it is registered."
+                )
+            if self.__build_super_pending[-1]:
+                raise RuntimeError("Context manager 'super' cannot be nested.")
+            depth = len(self.__build_classes)
+            self.__build_super_pending[-1] = True
+            try:
+                yield
+                if self.__build_super_pending[depth - 1]:
+                    raise RuntimeError(
+                        "Superclass constructor did not enter the instance context "
+                        "for the class being built."
+                    )
+            finally:
+                self.__build_super_pending[depth - 1] = False
 
     def register(self, instance: object) -> None:
-        """Registers the fresh instance for the active building process."""
-        if self.__building_instance:
-            if self.__instance_to_register is not None:
-                raise RuntimeError(
-                    "Method 'register' can be called once per instance built."
-                )
-            self.__instance_to_register = instance
+        """Registers the fresh instance for the innermost active build."""
+        if not self.__build_instances:
+            raise RuntimeError(
+                "Method 'register' must be called while building an instance."
+            )
+        if self.__build_instances[-1] is not None:
+            raise RuntimeError(
+                "Method 'register' can be called once per instance built."
+            )
+        self.__build_instances[-1] = instance
